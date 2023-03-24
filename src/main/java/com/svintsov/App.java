@@ -36,9 +36,11 @@ public class App {
                 .publishOn(publishOnScheduler)
                 .subscribe(firstSubscriber);
 
-/*        Subscriber<String> secondSubscriber = new CustomSubscriber("secondSubscriber");
+        Subscriber<String> secondSubscriber = new CustomSubscriber("secondSubscriber");
         coldMono
-                .subscribe(secondSubscriber);*/
+                .subscribeOn(subscribeOnScheduler)
+                .publishOn(publishOnScheduler)
+                .subscribe(secondSubscriber);
 
         log.info("At the end of the main program");
     }
