@@ -3,7 +3,6 @@ package com.svintsov;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.reactivestreams.Subscriber;
-import org.reactivestreams.Subscription;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
@@ -28,16 +27,18 @@ public class App {
         Scheduler subscribeOnScheduler = Schedulers.fromExecutorService(createExecutor("subscribeOnScheduler"));
         Scheduler publishOnScheduler = Schedulers.fromExecutorService(createExecutor("publishOnScheduler"));
 
-        Mono<String> coldMono = createMono();
+        Mono<String> sinkMono = createSinkMono();
+        Mono<String> supplierMono = createSupplierMono();
 
         Subscriber<String> firstSubscriber = new CustomSubscriber("firstSubscriber");
-        coldMono
+        Subscriber<String> secondSubscriber = new CustomSubscriber("secondSubscriber");
+
+        supplierMono
                 .subscribeOn(subscribeOnScheduler)
                 .publishOn(publishOnScheduler)
                 .subscribe(firstSubscriber);
 
-        Subscriber<String> secondSubscriber = new CustomSubscriber("secondSubscriber");
-        coldMono
+        supplierMono
                 .subscribeOn(subscribeOnScheduler)
                 .publishOn(publishOnScheduler)
                 .subscribe(secondSubscriber);
@@ -45,11 +46,19 @@ public class App {
         log.info("At the end of the main program");
     }
 
-    private Mono<String> createMono() {
+    private Mono<String> createSinkMono() {
         return Mono.create(monoSink -> {
             long randomNumber = random.nextLong(1000);
             log.info("Emitting a value and finishing the mono with the value {}", randomNumber);
             monoSink.success(String.valueOf(randomNumber));
+        });
+    }
+
+    private Mono<String> createSupplierMono() {
+        return Mono.defer(() -> {
+            long randomValue = random.nextLong(1000);
+            log.info("Emitting a value: {}", randomValue);
+            return Mono.just(String.valueOf(randomValue));
         });
     }
 
